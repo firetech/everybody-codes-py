@@ -62,7 +62,7 @@ def _race(players_in: str, track: Sequence[str]):
     for line in players_in.splitlines():
         name, ops = _parse_player(line)
         scores[name] = _score(ops, track)
-    ranking = sorted(scores.keys(), key=lambda n: -scores[n])
+    ranking = sorted(scores.keys(), key=lambda n: scores[n], reverse=True)
     return "".join(ranking)
 
 
