@@ -39,7 +39,7 @@ def part2():
 def part3():
     balls = [int(line) for line in lib.get_input(3).splitlines()]
     index = _precompute(
-        max(balls),
+        max(balls) // 2 + 50,
         (1, 3, 5, 10, 15, 16, 20, 24, 25, 30, 37, 38, 49, 50, 74, 75, 100, 101),
     )
     beetles = sum(
