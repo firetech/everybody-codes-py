@@ -3,7 +3,7 @@ Everybody Codes
 
 My solutions to [Everybody Codes](http://everybody.codes), in Python.
 
-Mainly for my own entertainment. I make no claims that these are good solutions.
+Mainly for skills development. I make no claims that these are good solutions.
 
 
 Running
