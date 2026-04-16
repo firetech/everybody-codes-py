@@ -46,12 +46,11 @@ def part2():
     wheels = _parse_wheels(lib.get_input(2))
 
     lcm = math.lcm(*(len(values) for _, values in wheels))
+    acc_coins = list(it.accumulate(_score(wheels, p + 1, 0) for p in range(lcm)))
+
     q = PART2_TARGET // lcm
     r = PART2_TARGET % lcm
-
-    coins_at = list(it.accumulate(_score(wheels, p + 1, 0) for p in range(lcm)))
-
-    print(f"Part 2: {coins_at[r-1] + q * coins_at[lcm-1]}")
+    print(f"Part 2: {acc_coins[r-1] + q * acc_coins[lcm-1]}")
 
 
 def part3():
