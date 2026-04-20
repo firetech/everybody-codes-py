@@ -1,6 +1,5 @@
 # pyright: strict
 
-
 from typing import Callable, Final, TypeAlias
 
 from everybody_codes_py_ft import common as lib
@@ -149,6 +148,7 @@ def part3():
 
     # Find optimal paths from the top position of each column to every column it can reach.
     best = [[UNSET_ALT for _ in range(width)] for _ in range(width)]
+    precalc_height = height * 2
     for x in range(width):
         start_pos = (x, 0)
         if start_pos not in chart:
@@ -157,7 +157,7 @@ def part3():
 
         def _opt_path_cb(pos: Pos, altitude: int):
             px, py = pos
-            if py == height:
+            if py == precalc_height:
                 this_best[px] = max(this_best[px], altitude)
                 return True
             return False
@@ -165,28 +165,34 @@ def part3():
         _traverse((x, 0), 0, _opt_path_cb)
 
     # Fly through complete map in optimal paths until all results have landed.
-    current = [UNSET_ALT for _ in range(width)]
-    current[start_x] = 384400
+    current = {start_x: 384400}
+    in_air = True
     y = 0
-    while True:
-        next_alts = [UNSET_ALT for _ in range(width)]
-        for from_x, from_best in enumerate(best):
-            from_alt = current[from_x]
-            if from_alt > 0:
-                for to_x, diff in enumerate(from_best):
-                    nalt = from_alt + diff
-                    if nalt <= 0:
-                        continue
-                    next_alts[to_x] = max(next_alts[to_x], nalt)
-        if all(a <= 0 for a in next_alts):
-            break
-        current = next_alts
-        y += height
+    while in_air:
+        next_alts = dict[int, int]()
+        in_air = False
+        max_alt = max(current.values())
+        for from_x, from_alt in current.items():
+            if from_alt < max_alt:  # Keep only the top altitudes.
+                continue
+            for to_x, diff in enumerate(best[from_x]):
+                nalt = from_alt + diff
+                if nalt <= 0:
+                    continue
+                in_air = True
+                next_alts[to_x] = max(
+                    nalt,
+                    next_alts[to_x] if to_x in next_alts else UNSET_ALT,
+                )
+        if in_air:
+            current = next_alts
+            y += precalc_height
 
     # Find the best possible positions from the remaining altitudes.
     best_y = [y]
-    for x, altitude in enumerate(current):
-        if altitude <= 0:
+    max_alt = max(current.values())
+    for x, altitude in current.items():
+        if altitude < max_alt:  # Keep only the top altitudes.
             continue
 
         def _opt_pos_cb(pos: Pos, altitude: int):
