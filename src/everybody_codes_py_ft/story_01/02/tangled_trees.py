@@ -2,14 +2,15 @@
 
 import re
 from collections import defaultdict
-from typing import Any, Iterable, Literal
+from typing import Iterable, Literal, TypeAlias
 
 from everybody_codes_py_ft import common as lib
 
+NodeSpec: TypeAlias = tuple[int, str]
+
 
 class TreeNode:
-
-    def __init__(self, spec: tuple[int, str]):
+    def __init__(self, spec: NodeSpec):
         self.rank, self.symbol = spec
         self.parent: tuple[TreeNode | None, Literal["left", "right"]] | None = None
         self.left: TreeNode | None = None
@@ -64,12 +65,16 @@ def _best_level(levels: dict[int, list[str]]):
     return best
 
 
-def _parse_input(data: str) -> Iterable[tuple[int, Any]]:
+def _parse_input(
+    data: str,
+) -> Iterable[
+    tuple[Literal["add"], tuple[int, NodeSpec, NodeSpec]] | tuple[Literal["swap"], int]
+]:
     for line in data.splitlines():
         m = re.match(r"^ADD id=(\d+) left=\[(\d+),(\S)\] right=\[(\d+),(\S)\]$", line)
         if m:
             yield (
-                1,
+                "add",
                 (
                     int(m.group(1)),
                     (int(m.group(2)), str(m.group(3))),
@@ -79,7 +84,7 @@ def _parse_input(data: str) -> Iterable[tuple[int, Any]]:
             continue
         m = re.match(r"^SWAP (\d+)$", line)
         if m:
-            yield (2, int(m.group(1)))
+            yield ("swap", int(m.group(1)))
             continue
         raise Exception(f"Malformed line: {line}")
 
@@ -87,9 +92,9 @@ def _parse_input(data: str) -> Iterable[tuple[int, Any]]:
 def part1():
     left_root = None
     right_root = None
-    for op, data in _parse_input(lib.get_input(1)):
-        assert op == 1
-        _, left_spec, right_spec = data
+    for op in _parse_input(lib.get_input(1)):
+        assert op[0] == "add"
+        _, left_spec, right_spec = op[1]
         left_root = _insert(left_root, TreeNode(left_spec), "left")
         right_root = _insert(right_root, TreeNode(right_spec), "right")
     assert left_root is not None and right_root is not None
@@ -104,21 +109,19 @@ def part2():
     left_root = None
     right_root = None
     id_map = dict[int, tuple[TreeNode, TreeNode]]()
-    for op, data in _parse_input(lib.get_input(2)):
-        if op == 1:
-            node_id, left_spec, right_spec = data
+    for op in _parse_input(lib.get_input(2)):
+        if op[0] == "add":
+            node_id, left_spec, right_spec = op[1]
             left_node = TreeNode(left_spec)
             right_node = TreeNode(right_spec)
             left_root = _insert(left_root, left_node, "left")
             right_root = _insert(right_root, right_node, "right")
             id_map[node_id] = (left_node, right_node)
-        elif op == 2:
-            swap_id = data
+        elif op[0] == "swap":
+            swap_id = op[1]
             left_node, right_node = id_map[swap_id]
             left_node.rank, right_node.rank = right_node.rank, left_node.rank
             left_node.symbol, right_node.symbol = right_node.symbol, left_node.symbol
-        else:
-            raise Exception(f"Unknown op {op}")
     assert left_root is not None and right_root is not None
 
     left_levels = _traverse(left_root)
@@ -131,16 +134,16 @@ def part3():
     left_root = None
     right_root = None
     id_map = dict[int, tuple[TreeNode, TreeNode]]()
-    for op, data in _parse_input(lib.get_input(3)):
-        if op == 1:
-            node_id, left_spec, right_spec = data
+    for op in _parse_input(lib.get_input(3)):
+        if op[0] == "add":
+            node_id, left_spec, right_spec = op[1]
             left_node = TreeNode(left_spec)
             right_node = TreeNode(right_spec)
             left_root = _insert(left_root, left_node, "left")
             right_root = _insert(right_root, right_node, "right")
             id_map[node_id] = (left_node, right_node)
-        elif op == 2:
-            swap_id = data
+        elif op[0] == "swap":
+            swap_id = op[1]
             left_node, right_node = id_map[swap_id]
             for node, other in ((left_node, right_node), (right_node, left_node)):
                 assert node.parent
@@ -156,8 +159,6 @@ def part3():
                     else:
                         right_root = other
             left_node.parent, right_node.parent = right_node.parent, left_node.parent
-        else:
-            raise Exception(f"Unknown op {op}")
     assert left_root is not None and right_root is not None
 
     left_levels = _traverse(left_root)
