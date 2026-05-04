@@ -9,24 +9,21 @@ from everybody_codes_py_ft import common as lib
 Rules: TypeAlias = dict[str, set[str]]
 
 
-def _parse_input(data: str):
+def _parse_input(data: str) -> tuple[list[str], Rules]:
     names_in, rules_in = data.split("\n\n")
-    names = names_in.split(",")
-    rules = Rules()
-    for line in rules_in.splitlines():
-        rule_in, rule_out = line.split(" > ")
-        rules[rule_in] = set(rule_out.split(","))
-    return names, rules
+    return (
+        names_in.split(","),
+        {
+            rule_in: set(rule_out.split(","))
+            for rule_in, rule_out in (
+                line.split(" > ") for line in rules_in.splitlines()
+            )
+        },
+    )
 
 
 def _match_rule(rules: Rules, name: str):
-    for a, b in it.pairwise(name):
-        if a not in rules:
-            continue
-        if b not in rules[a]:
-            break
-    else:
-        return True
+    return all(a not in rules or b in rules[a] for a, b in it.pairwise(name))
 
 
 def part1():
@@ -52,12 +49,13 @@ def part3():
             count += sum(_possible_names(c, length + 1) for c in rules[letter])
         return count
 
-    count = 0
-    for prefix in valid_prefixes:
-        count += _possible_names(prefix[-1], len(prefix))
-        for other in valid_prefixes:
-            if prefix != other and other.startswith(prefix):
-                count -= _possible_names(other[-1], len(other))
+    count = sum(_possible_names(prefix[-1], len(prefix)) for prefix in valid_prefixes)
+    # Remove double counted names
+    count -= sum(
+        _possible_names(b[-1], len(b))
+        for a, b in it.permutations(valid_prefixes, 2)
+        if b.startswith(a)
+    )
     print(f"Part 3: {count}")
 
 
