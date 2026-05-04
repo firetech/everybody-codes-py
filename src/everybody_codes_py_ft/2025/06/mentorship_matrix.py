@@ -1,5 +1,7 @@
 # pyright: strict
 
+from typing import Final
+
 from everybody_codes_py_ft import common as lib
 
 
@@ -22,36 +24,39 @@ def part2():
     print(f"Part 2: {pairs}")
 
 
+PART3_RANGE: Final = 1000
+PART3_REPEATS: Final = 1000
+
+
 def part3():
     letters = lib.get_input(3)
     input_len = len(letters)
-    repeats = 1000
+    repeats = PART3_REPEATS
     # Fix for handling example
-    while input_len < 2000:
+    while input_len < PART3_RANGE * 2 and repeats > 0:
         # Make sure range doesn't span multiple repeats of the input
-        # (simplifies calculation below)
+        # (simplifies calculations below)
         letters *= 10
         input_len *= 10
         repeats //= 10
-    assert repeats >= 2, "We're gonna have a problem here"
-    mid_count = repeats - 2
+    assert repeats > 0, "We're gonna have a problem here"
     pairs = 0
     for cat in ("a", "b", "c"):
-        novices = [1 if c == cat else 0 for c in letters] * 3
-        knights = [1 if c == cat.upper() else 0 for c in letters]
-        for i, k in enumerate(knights):
-            if k == 0:
+        novices = [1 if c == cat else 0 for c in letters]
+        for i, c in enumerate(letters):
+            if c != cat.upper():
                 continue
-            left = max(0, i - 1000)
-            right = min(i + 1001, input_len)
-            # Start of arrangement (non-wrapping)
-            pairs += sum(novices[left + input_len : i + input_len + 1001])
-            # Middle repeats of arrangement (wrapping)
-            pairs += (
-                sum(novices[i + input_len - 1000 : i + input_len + 1001]) * mid_count
-            )
-            # End of arrangement (non-wrapping)
-            pairs += sum(novices[i + input_len - 1000 : right + input_len])
+            left_raw = i - PART3_RANGE
+            left = max(0, left_raw)
+            right_raw = i + PART3_RANGE + 1
+            right = min(right_raw, input_len)
+
+            # The non-wrapping parts are simple
+            pairs += sum(novices[left:right]) * repeats
+
+            # Add the wrapping parts (excluding beginning and end of the arrangement)
+            pairs += sum(novices[input_len - (left - left_raw) :]) * (repeats - 1)
+            pairs += sum(novices[: right_raw - right]) * (repeats - 1)
 
     print(f"Part 3: {pairs}")
 
