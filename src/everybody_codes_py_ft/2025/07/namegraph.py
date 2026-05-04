@@ -43,29 +43,22 @@ def part2():
 
 def part3():
     prefixes, rules = _parse_input(lib.get_input(3))
+    valid_prefixes = set(filter(ft.partial(_match_rule, rules), prefixes))
 
     @ft.cache
-    def _possible_suffixes(letter: str, length: int):
-        suffixes = set[str]()
-        if length >= 7:
-            suffixes.add(letter)
+    def _possible_names(letter: str, length: int):
+        count = 1 if length >= 7 else 0
         if length < 11 and letter in rules:
-            suffixes.update(
-                letter + s
-                for c in rules[letter]
-                for s in _possible_suffixes(c, length + 1)
-            )
-        return suffixes
+            count += sum(_possible_names(c, length + 1) for c in rules[letter])
+        return count
 
-    names = set[str]()
-    for prefix in prefixes:
-        if not _match_rule(rules, prefix):
-            continue
-        names.update(
-            prefix[:-1] + suffix
-            for suffix in _possible_suffixes(prefix[-1], len(prefix))
-        )
-    print(f"Part 3: {len(names)}")
+    count = 0
+    for prefix in valid_prefixes:
+        count += _possible_names(prefix[-1], len(prefix))
+        for other in valid_prefixes:
+            if prefix != other and other.startswith(prefix):
+                count -= _possible_names(other[-1], len(other))
+    print(f"Part 3: {count}")
 
 
 if __name__ == "__main__":
