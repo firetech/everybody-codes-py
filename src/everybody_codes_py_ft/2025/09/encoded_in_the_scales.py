@@ -1,6 +1,5 @@
 # pyright: strict
 
-import itertools as it
 import math
 from collections import defaultdict
 
@@ -16,25 +15,47 @@ def _parse_input(part: int):
     }
 
 
+def _similarity(a: str, b: str):
+    return [ca == cb for ca, cb in zip(a, b)]
+
+
 def _find_parents(scale_id: int, scales: dict[int, str]):
     sequence = scales[scale_id]
-    for parent_ids in it.combinations(scales, 2):
-        if scale_id in parent_ids:
-            continue
-        parent_sequences = tuple(scales[parent_id] for parent_id in parent_ids)
-        if all(
-            any(p[i] == s for p in parent_sequences) for i, s in enumerate(sequence)
+    similarities = {
+        other_id: _similarity(sequence, scales[other_id])
+        for other_id in scales
+        if other_id != scale_id
+    }
+    similarity_count = {
+        other_id: similarity.count(True)
+        for other_id, similarity in similarities.items()
+    }
+    similarity_toplist = sorted(
+        similarities,
+        key=lambda sim_id: similarity_count[sim_id],
+        reverse=True,
+    )
+    sequence_len = len(sequence)
+    for i, parent_a in enumerate(similarity_toplist):
+        if (
+            similarity_count[parent_a] + similarity_count[similarity_toplist[i + 1]]
+            < sequence_len
         ):
-            return parent_ids
+            break
+        for parent_b in similarity_toplist[i + 1 :]:
+            if similarity_count[parent_a] + similarity_count[parent_b] < sequence_len:
+                break
+            if all(
+                sim_a | sim_b
+                for sim_a, sim_b in zip(similarities[parent_a], similarities[parent_b])
+            ):
+                return (parent_a, parent_b)
     return None
 
 
-def _similarity(scale_id: int, parents: tuple[int, int], scales: dict[int, str]):
+def _similarity_score(scale_id: int, parents: tuple[int, int], scales: dict[int, str]):
     return math.prod(
-        [
-            sum(p == s for p, s in zip(scales[parent], scales[scale_id]))
-            for parent in parents
-        ]
+        _similarity(scales[parent], scales[scale_id]).count(True) for parent in parents
     )
 
 
@@ -43,7 +64,7 @@ def part1():
     for scale_id in scales:
         parents = _find_parents(scale_id, scales)
         if parents:
-            print(f"Part 1: {_similarity(scale_id, parents, scales)}")
+            print(f"Part 1: {_similarity_score(scale_id, parents, scales)}")
             break
     else:
         raise Exception("No child found?")
@@ -55,7 +76,7 @@ def part2():
     for scale_id in scales:
         parents = _find_parents(scale_id, scales)
         if parents:
-            similarity_sum += _similarity(scale_id, parents, scales)
+            similarity_sum += _similarity_score(scale_id, parents, scales)
     print(f"Part 2: {similarity_sum}")
 
 
