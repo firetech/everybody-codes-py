@@ -1,19 +1,17 @@
 # pyright: strict
 
-import itertools as it
-
 from everybody_codes_py_ft import common as lib
 
 
 def part1():
     wheel = [1]
     lefts = list[int]()
-    for right, *left in it.batched(
-        (int(line) for line in lib.get_input(1).splitlines()), 2
-    ):
-        wheel.append(right)
-        if left:
-            lefts.extend(left)
+    for i, line in enumerate(lib.get_input(1).splitlines()):
+        num = int(line)
+        if i & 1 == 0:
+            wheel.append(num)
+        else:
+            lefts.append(num)
     wheel.extend(lefts[::-1])
     print(f"Part 1: {wheel[2025 % len(wheel)]}")
 
@@ -21,13 +19,12 @@ def part1():
 def _range_wheel(part: int, moves: int):
     wheel = [range(1, 2)]
     lefts = list[range]()
-    for (right_start, right_end), *left in it.batched(
-        (line.split("-") for line in lib.get_input(part).splitlines()), 2
-    ):
-        wheel.append(range(int(right_start), int(right_end) + 1))
-        if left:
-            left_start, left_end = left[0]
-            lefts.append(range(int(left_end), int(left_start) - 1, -1))
+    for i, line in enumerate(lib.get_input(part).splitlines()):
+        start, end = line.split("-", 2)
+        if i & 1 == 0:
+            wheel.append(range(int(start), int(end) + 1))
+        else:
+            lefts.append(range(int(end), int(start) - 1, -1))
     wheel.extend(lefts[::-1])
 
     range_lens = [len(r) for r in wheel]
