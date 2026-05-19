@@ -1,6 +1,7 @@
 # pyright: strict
 
 import heapq
+import itertools as it
 import math
 from typing import Final
 
@@ -9,7 +10,7 @@ from everybody_codes_py_ft import common as lib
 
 def _parse_input(part: int):
     lines = lib.get_input(part).splitlines()
-    grid = [[int(x) if x not in ("@", "S") else 0 for x in line] for line in lines]
+    grid = [[int(x) if x.isdigit() else 0 for x in line] for line in lines]
     specials = {
         c: (x, y)
         for y, line in enumerate(lines)
@@ -80,7 +81,7 @@ def part3():
             if time > cost[(x, y, circled)]:
                 continue
 
-            if x == sx and y == sy and circled:
+            if circled and x == sx and y == sy:
                 return time
 
             for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0)):
@@ -111,7 +112,7 @@ def part3():
 
         return MAX_COST
 
-    for radius in range(1, max(max(line) for line in radius_grid)):
+    for radius in range(1, max(it.chain(*radius_grid))):
         min_time = _circle_volcano(radius)
         if min_time < (radius + 1) * 30:
             print(f"Part 3: {min_time * radius}")
