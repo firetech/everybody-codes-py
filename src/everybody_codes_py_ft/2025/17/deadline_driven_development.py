@@ -2,7 +2,7 @@
 
 import heapq
 import math
-from typing import Final, cast
+from typing import Final
 
 from everybody_codes_py_ft import common as lib
 
@@ -70,51 +70,54 @@ def part3():
         for y in range(height)
     ]
 
-    start = (sx, sy)
-    start_state = (start, cast(bool, False), radius_grid[sy][sx])
-    q = [(0, *start_state)]
-    cost = {start_state: 0}
-    result = -1
-    while q:
-        time, pos, circled, min_radius = heapq.heappop(q)
+    def _circle_volcano(min_radius: int):
+        q = [(0, sx, sy, False)]
+        cost = {(sx, sy, False): 0}
 
-        if time > cost[(pos, circled, min_radius)]:
-            continue
+        while q:
+            time, x, y, circled = heapq.heappop(q)
 
-        if pos == start and circled:
-            result = time * (time // 30)
-            break
-
-        x, y = pos
-        for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0)):
-            nx = x + dx
-            if nx < 0 or nx >= width:
-                continue
-            ny = y + dy
-            if ny < 0 or ny >= height:
+            if time > cost[(x, y, circled)]:
                 continue
 
-            # Check if we are circling the volcano or not (winding numbers)
-            ncircled = circled
-            if ny > vy:
-                if x < vx and nx == vx:
-                    ncircled = True
-                elif x >= vx and nx < vx:
-                    ncircled = False
+            if x == sx and y == sy and circled:
+                return time
 
-            # Don't allow destroyed positions
-            ntime = time + grid[ny][nx]
-            nradius = min(radius_grid[ny][nx], min_radius)
-            if nradius <= ntime // 30:
-                continue
+            for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+                nx = x + dx
+                if nx < 0 or nx >= width:
+                    continue
+                ny = y + dy
+                if ny < 0 or ny >= height:
+                    continue
 
-            npos = (nx, ny)
-            nstate = (npos, ncircled, nradius)
-            if ntime < cost.get(nstate, MAX_COST):
-                cost[nstate] = ntime
-                heapq.heappush(q, (ntime, *nstate))
+                if radius_grid[ny][nx] <= min_radius:
+                    continue
 
-    print(f"Part 3: {result}")
+                # Check if we are circling the volcano or not (winding numbers)
+                ncircled = circled
+                if ny > vy:
+                    if x < vx and nx == vx:
+                        ncircled = True
+                    elif x >= vx and nx < vx:
+                        ncircled = False
+
+                ntime = time + grid[ny][nx]
+
+                nstate = (nx, ny, ncircled)
+                if ntime < cost.get(nstate, MAX_COST):
+                    cost[nstate] = ntime
+                    heapq.heappush(q, (ntime, *nstate))
+
+        return MAX_COST
+
+    for radius in range(1, max(max(line) for line in radius_grid)):
+        min_time = _circle_volcano(radius)
+        if min_time < (radius + 1) * 30:
+            print(f"Part 3: {min_time * radius}")
+            return
+
+    raise Exception("Not possible")
 
 
 if __name__ == "__main__":
