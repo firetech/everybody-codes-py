@@ -63,9 +63,6 @@ def _parse_input(part: int) -> tuple[Pos, Pos, Chart, CompressionMap, Compressio
     )
 
 
-MAX_COST: Final = 0xFFFFFFFF
-
-
 def _traverse(part: int):
     start, end, chart, real_x, real_y = _parse_input(part)
     max_x = len(real_x)
