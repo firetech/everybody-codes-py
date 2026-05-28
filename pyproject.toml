@@ -2,7 +2,9 @@
 name = "everybody-codes-py-ft"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "z3-solver>=4.16.0.0",
+]
 
 [build-system]
 requires = ["uv_build>=0.11.6,<0.12.0"]
