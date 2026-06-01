@@ -1,7 +1,10 @@
-# pyright: strict
+# Z3 has no type stubs :(
+# pyright: basic
 
 import re
 from typing import Callable, Final, TypeAlias, TypedDict, cast
+
+import z3
 
 from everybody_codes_py_ft import common as lib
 
@@ -79,13 +82,7 @@ def part2():
     print(f"Part 2: {total_out}")
 
 
-# Z3 has no type stubs :(
-# pyright: basic
-
-
 def part3():
-    import z3
-
     plant_input, test_cases = lib.get_input(3).split("\n\n\n")
     plants = _parse_plants(plant_input)
     bits = [z3.Bool(f"p{plant["id"]}") for plant in plants if plant["branches"] is None]
@@ -94,16 +91,12 @@ def part3():
         energy = {}
         for plant in plants:
             if plant["branches"] is None:
-                incoming = bits[plant["id"] - 1] * plant["thickness"]
+                incoming = cast(z3.ArithRef, bits[plant["id"] - 1] * plant["thickness"])
             else:
                 incoming = sum(
                     energy[dest] * thickness for dest, thickness in plant["branches"]
                 )
-            energy[plant["id"]] = z3.If(
-                incoming >= plant["thickness"],  # pyright: ignore[reportOperatorIssue]
-                incoming,
-                0,
-            )
+            energy[plant["id"]] = z3.If(incoming >= plant["thickness"], incoming, 0)
         return energy[plants[-1]["id"]]
 
     optimizer = z3.Optimize()
