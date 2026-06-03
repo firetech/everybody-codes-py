@@ -1,5 +1,6 @@
 # pyright: strict
 
+import itertools as it
 from collections import deque
 from typing import Callable, TypeAlias
 
@@ -42,14 +43,12 @@ def _traverse(
 
     pos = start
     steps = 0
-    m = 0
-    l = len(moves)
+    move_cycle = it.cycle(moves)
     while not condition(pos, visited):
         npos = pos
         x, y = pos
         while npos in visited:
-            dx, dy = moves[m]
-            m = (m + 1) % l
+            dx, dy = next(move_cycle)
             npos = (x + dx, y + dy)
         visited.add(npos)
         for dx, dy in MOVES:
@@ -84,22 +83,17 @@ def part3():
     start, ends = _parse_input(3)
     assert start and ends
 
-    def _grid_size(visited: set[Pos]):
-        all_x, all_y = zip(*visited)
-        return (
-            min(all_x) - 1,
-            max(all_x) + 1,
-            min(all_y) - 1,
-            max(all_y) + 1,
-        )
-
     last_seen = set[Pos]()
 
     def _flood_void(visited: set[Pos]):
         # Flood fill from outside. If a bone is found, we're not done.
-        min_x, max_x, min_y, max_y = _grid_size(visited)
-        surrounded = True
+        all_x, all_y = zip(*visited)
+        min_x = min(all_x) - 1
+        max_x = max(all_x) + 1
+        min_y = min(all_y) - 1
+        max_y = max(all_y) + 1
 
+        surrounded = True
         seen = visited.copy()
         q = deque([(min_x, min_y)])
         while q:
