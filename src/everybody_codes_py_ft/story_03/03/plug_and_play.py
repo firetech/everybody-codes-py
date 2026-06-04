@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import dataclasses as dc
+import pathlib as pl
 import re
-from typing import Iterable, TypeAlias
+from typing import Iterable, Literal, TypeAlias, overload
 
 from everybody_codes_py_ft import common as lib
 
@@ -24,6 +25,7 @@ class Node:
     plug: Connector
     left_socket: Connector
     right_socket: Connector
+    data: str
     left: Node | None = None
     right: Node | None = None
 
@@ -67,17 +69,22 @@ class Node:
         # Node not connected, send it on for another lap
         return new_node
 
-    def read_ids(self) -> Iterable[int]:
+    @overload
+    def read(self, attr: Literal["id"] = "id") -> Iterable[int]: ...
+    @overload
+    def read(self, attr: Literal["data"]) -> Iterable[str]: ...
+
+    def read(self, attr: Literal["id", "data"] = "id") -> Iterable[int | str]:
         if self.left:
-            yield from self.left.read_ids()
-        yield self.id
+            yield from self.left.read(attr)
+        yield self.data if attr == "data" else self.id
         if self.right:
-            yield from self.right.read_ids()
+            yield from self.right.read(attr)
 
 
 def _parse_node(line: str):
     m = re.match(
-        r"^id=(\d+), plug=(.+), leftSocket=(.+), rightSocket=(.+), data=.+$", line
+        r"^id=(\d+), plug=(.+), leftSocket=(.+), rightSocket=(.+), data=(.+)$", line
     )
     if m is None:
         raise Exception(f"Malformed line: {line}")
@@ -86,6 +93,7 @@ def _parse_node(line: str):
         plug=tuple(m[2].split(" ")),
         left_socket=tuple(m[3].split(" ")),
         right_socket=tuple(m[4].split(" ")),
+        data=m[5],
     )
 
 
@@ -102,11 +110,16 @@ def _connect_nodes(part: int) -> Node:
 
 
 def _checksum(root: Node):
-    return sum((i + 1) * node_id for i, node_id in enumerate(root.read_ids()))
+    return sum((i + 1) * node_id for i, node_id in enumerate(root.read()))
 
 
 def _solve(part: int):
     root = _connect_nodes(part)
+    self_dir = pl.Path(__file__).parent
+    with open(self_dir / f"data{part}.txt", "w") as f:
+        for line in root.read("data"):
+            f.write(line)
+            f.write("\n")
     return _checksum(root)
 
 
